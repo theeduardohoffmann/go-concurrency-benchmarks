@@ -19,6 +19,7 @@ Dois programas Go independentes, cada um com seu `go.mod`:
 
 ```bash
 cd filosofos
+go build                 # compila (gera o executável filosofos)
 go run -race . -n 5 -r 1000
 ```
 
@@ -34,6 +35,7 @@ Para cada estratégia o programa imprime as refeições e a espera média pelos 
 
 ```bash
 cd produtor-consumidor
+go build                 # compila (gera o executável produtor-consumidor)
 go run -race . -p 4 -c 4 -k 1,10,100
 ```
 

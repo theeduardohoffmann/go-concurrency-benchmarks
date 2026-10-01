@@ -161,6 +161,10 @@ func main() {
 	}
 	lista := []string{"base", "hierarquia", "garcom"}
 	if *estr != "todas" {
+		if *estr != "base" && *estr != "hierarquia" && *estr != "garcom" {
+			fmt.Println("estratégia inválida:", *estr)
+			return
+		}
 		lista = []string{*estr}
 	}
 	fmt.Printf("N=%d R=%d\n", *n, *r)

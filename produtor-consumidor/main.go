@@ -230,6 +230,10 @@ func main() {
 	cons := flag.Duration("cons", 500*time.Microsecond, "tempo médio para consumir um item")
 	tmo := flag.Duration("timeout", 5*time.Millisecond, "timeout do consumidor 0 (0 desliga)")
 	flag.Parse()
+	if *pf < 1 || *cf < 1 || *itens < 1 {
+		fmt.Println("use p >= 1, c >= 1 e itens >= 1")
+		return
+	}
 
 	fmt.Printf("P=%d C=%d itens/produtor=%d prod=%v cons=%v timeout=%v\n", *pf, *cf, *itens, *prod, *cons, *tmo)
 	fmt.Printf("%-9s %4s %13s %11s %9s  %s\n", "versão", "K", "itens/s", "ocup. média", "timeouts", "itens por consumidor")
