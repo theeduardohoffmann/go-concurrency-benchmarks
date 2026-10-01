@@ -13,13 +13,16 @@ import (
 )
 
 var (
-	n       = flag.Int("n", 5, "número de filósofos (>= 2)")
-	r       = flag.Int("r", 1000, "R: número total de refeições da mesa")
-	estr    = flag.String("estrategia", "todas", "base | hierarquia | limite | garcom | todas")
-	pensar  = flag.Duration("pensar", 2*time.Millisecond, "tempo máximo pensando")
-	comer   = flag.Duration("comer", 2*time.Millisecond, "tempo máximo comendo")
-	segurar = flag.Duration("segurar", 2*time.Millisecond, "pausa entre pegar o 1º e o 2º garfo")
-	timeout = flag.Duration("timeout", time.Second, "esperar um garfo por mais que isso = deadlock")
+	n    = flag.Int("n", 5, "N: número de filósofos (>= 2)")
+	r    = flag.Int("r", 1000, "R: número total de refeições da mesa")
+	estr = flag.String("estrategia", "todas", "base | hierarquia | garcom | todas")
+)
+
+const (
+	pensar  = 2 * time.Millisecond // tempo máximo pensando
+	comer   = 2 * time.Millisecond // tempo máximo comendo
+	segurar = 2 * time.Millisecond // pausa entre pegar o 1º e o 2º garfo (faz o deadlock da base acontecer)
+	timeout = time.Second          // esperar um garfo por mais que isso = deadlock
 )
 
 // pedido enviado ao garçom; o garçom responde em ok quando os dois garfos estão com o filósofo.
@@ -31,7 +34,6 @@ type pedido struct {
 type mesa struct {
 	estrategia string
 	garfos     []chan struct{} // garfo livre = há um token no channel (capacidade 1)
-	sala       chan struct{}   // estratégia "limite": semáforo com N-1 vagas
 	pedidos    chan pedido     // estratégia "garcom"
 	restantes  atomic.Int64    // refeições que ainda podem ser feitas
 	deadlock   atomic.Bool
@@ -50,8 +52,8 @@ func (m *mesa) pegar(id, g int) bool {
 	select {
 	case <-m.garfos[g]:
 		return true
-	case <-time.After(*timeout):
-		fmt.Printf("  filósofo %d esperou mais de %v pelo garfo %d: DEADLOCK\n", id, *timeout, g)
+	case <-time.After(timeout):
+		fmt.Printf("  filósofo %d esperou mais de %v pelo garfo %d: DEADLOCK\n", id, timeout, g)
 		m.deadlock.Store(true)
 		return false
 	}
@@ -66,7 +68,7 @@ func (m *mesa) filosofo(id int, wg *sync.WaitGroup) {
 		primeiro, segundo = segundo, primeiro // sempre o garfo de menor número primeiro
 	}
 	for {
-		dorme(*pensar)
+		dorme(pensar)
 		if m.restantes.Add(-1) < 0 { // acabaram as R refeições
 			return
 		}
@@ -77,14 +79,11 @@ func (m *mesa) filosofo(id int, wg *sync.WaitGroup) {
 			p := pedido{id, make(chan struct{})}
 			m.pedidos <- p
 			<-p.ok // o garçom já retirou os dois garfos para nós
-		case "limite":
-			m.sala <- struct{}{} // entra na sala (no máximo N-1 lá dentro)
-			fallthrough
 		default:
 			if !m.pegar(id, primeiro) {
 				return
 			}
-			dorme(*segurar)
+			dorme(segurar)
 			if !m.pegar(id, segundo) {
 				return
 			}
@@ -92,13 +91,10 @@ func (m *mesa) filosofo(id int, wg *sync.WaitGroup) {
 		m.espera[id] += time.Since(inicio)
 
 		m.refeicoes[id]++
-		dorme(*comer)
+		dorme(comer)
 
 		m.soltar(primeiro)
 		m.soltar(segundo)
-		if m.estrategia == "limite" {
-			<-m.sala
-		}
 	}
 }
 
@@ -120,12 +116,10 @@ func executar(estrategia string) {
 		m.garfos[i] = make(chan struct{}, 1)
 		m.garfos[i] <- struct{}{}
 	}
-	m.sala = make(chan struct{}, *n-1)
 	m.pedidos = make(chan pedido)
 	m.restantes.Store(int64(*r))
 
 	fmt.Printf("\n=== estratégia: %s ===\n", estrategia)
-	inicio := time.Now()
 	garcomFim := make(chan struct{})
 	if estrategia == "garcom" {
 		go m.garcom(garcomFim)
@@ -140,10 +134,9 @@ func executar(estrategia string) {
 		close(m.pedidos) // o garçom sai do range e termina
 		<-garcomFim
 	}
-	dur := time.Since(inicio)
 
 	fmt.Printf("%-10s %10s %20s\n", "filósofo", "refeições", "espera média (ms)")
-	total, menor, maior := 0, m.refeicoes[0], m.refeicoes[0]
+	total := 0
 	for i := 0; i < *n; i++ {
 		media := 0.0
 		if m.refeicoes[i] > 0 {
@@ -151,9 +144,8 @@ func executar(estrategia string) {
 		}
 		fmt.Printf("%-10d %10d %20.2f\n", i, m.refeicoes[i], media)
 		total += m.refeicoes[i]
-		menor, maior = min(menor, m.refeicoes[i]), max(maior, m.refeicoes[i])
 	}
-	fmt.Printf("total: %d refeições em %v | menos: %d, mais: %d\n", total, dur.Round(time.Millisecond), menor, maior)
+	fmt.Printf("total: %d refeições\n", total)
 	if m.deadlock.Load() {
 		fmt.Println("RESULTADO: deadlock detectado (todos os filósofos ficaram bloqueados).")
 	} else {
@@ -167,11 +159,11 @@ func main() {
 		fmt.Println("use n >= 2 e r >= 1")
 		return
 	}
-	lista := []string{"base", "hierarquia", "limite", "garcom"}
+	lista := []string{"base", "hierarquia", "garcom"}
 	if *estr != "todas" {
 		lista = []string{*estr}
 	}
-	fmt.Printf("N=%d R=%d pensar<%v comer<%v segurar=%v\n", *n, *r, *pensar, *comer, *segurar)
+	fmt.Printf("N=%d R=%d\n", *n, *r)
 	for _, e := range lista {
 		executar(e)
 	}

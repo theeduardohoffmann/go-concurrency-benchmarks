@@ -1,8 +1,0 @@
-﻿P=4 C=4 itens/produtor=50000 prod=0s cons=0s timeout=5ms
-versão       K       itens/s ocup. média  espera Put  timeouts  itens por consumidor
-canal        1       2289673        0.59         2µs         0  [30599 58182 55907 55312]  produzidos=200000 consumidos=200000 OK
-semaforo     1       1401108        0.00         3µs         0  [48867 50430 50456 50247]  produzidos=200000 consumidos=200000 OK
-canal       10       3681397        5.48         1µs         0  [23851 57451 59821 58877]  produzidos=200000 consumidos=200000 OK
-semaforo    10       1844391        2.73         2µs         0  [40613 54750 53000 51637]  produzidos=200000 consumidos=200000 OK
-canal      100       4912315       46.34         1µs         0  [20113 57313 60421 62153]  produzidos=200000 consumidos=200000 OK
-semaforo   100       2556515       55.61         2µs         0  [43396 53321 50780 52503]  produzidos=200000 consumidos=200000 OK

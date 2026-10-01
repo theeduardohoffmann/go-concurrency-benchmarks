@@ -1,6 +1,6 @@
 // Produtor/Consumidor com buffer limitado: versão com channel e versão com semáforos.
 //
-// Uso: go run -race . -p 4 -c 4 -k 1,10,100 -versao ambas
+// Uso: go run -race . -p 4 -c 4 -k 1,10,100
 package main
 
 import (
@@ -128,8 +128,7 @@ func rodar(versao string, k, p, c, itens int, prod, cons, tmo time.Duration) {
 
 	var prodWG, consWG sync.WaitGroup
 	consumidos := make([][]int, c) // cada consumidor só escreve na sua posição
-	esperaPut := make([]time.Duration, p)
-	timeouts := 0 // só o consumidor 0 escreve
+	timeouts := 0                  // só o consumidor 0 escreve
 
 	// amostrador: mede a ocupação do buffer a cada 200µs
 	parar, amostradorFim := make(chan struct{}), make(chan struct{})
@@ -156,9 +155,7 @@ func rodar(versao string, k, p, c, itens int, prod, cons, tmo time.Duration) {
 			defer prodWG.Done()
 			for s := 0; s < itens; s++ {
 				trabalho(prod)
-				t0 := time.Now()
 				b.put(i*itens + s) // identificador único do item
-				esperaPut[i] += time.Since(t0)
 			}
 		}(i)
 	}
@@ -219,13 +216,8 @@ func rodar(versao string, k, p, c, itens int, prod, cons, tmo time.Duration) {
 	if total != p*itens {
 		ok = false // algum item foi perdido
 	}
-	var somaPut time.Duration
-	for _, d := range esperaPut {
-		somaPut += d
-	}
-	fmt.Printf("%-9s %4d %13.0f %11.2f %11v %9d  [%s]  produzidos=%d consumidos=%d %s\n",
-		versao, k, float64(total)/dur.Seconds(), soma/max(amostras, 1),
-		(somaPut / time.Duration(p*itens)).Round(time.Microsecond), timeouts,
+	fmt.Printf("%-9s %4d %13.0f %11.2f %9d  [%s]  produzidos=%d consumidos=%d %s\n",
+		versao, k, float64(total)/dur.Seconds(), soma/max(amostras, 1), timeouts,
 		strings.Join(porConsumidor, " "), p*itens, total, map[bool]string{true: "OK", false: "ERRO!"}[ok])
 }
 
@@ -237,11 +229,10 @@ func main() {
 	prod := flag.Duration("prod", 500*time.Microsecond, "tempo médio para produzir um item")
 	cons := flag.Duration("cons", 500*time.Microsecond, "tempo médio para consumir um item")
 	tmo := flag.Duration("timeout", 5*time.Millisecond, "timeout do consumidor 0 (0 desliga)")
-	versao := flag.String("versao", "ambas", "canal | semaforo | ambas")
 	flag.Parse()
 
 	fmt.Printf("P=%d C=%d itens/produtor=%d prod=%v cons=%v timeout=%v\n", *pf, *cf, *itens, *prod, *cons, *tmo)
-	fmt.Printf("%-9s %4s %13s %11s %11s %9s  %s\n", "versão", "K", "itens/s", "ocup. média", "espera Put", "timeouts", "itens por consumidor")
+	fmt.Printf("%-9s %4s %13s %11s %9s  %s\n", "versão", "K", "itens/s", "ocup. média", "timeouts", "itens por consumidor")
 	for _, s := range strings.Split(*ks, ",") {
 		k, err := strconv.Atoi(strings.TrimSpace(s))
 		if err != nil || k < 1 {
@@ -249,9 +240,7 @@ func main() {
 			return
 		}
 		for _, v := range []string{"canal", "semaforo"} {
-			if *versao == "ambas" || *versao == v {
-				rodar(v, k, *pf, *cf, *itens, *prod, *cons, *tmo)
-			}
+			rodar(v, k, *pf, *cf, *itens, *prod, *cons, *tmo)
 		}
 	}
 }
