@@ -1,0 +1,8 @@
+﻿P=4 C=4 itens/produtor=2000 prod=0s cons=1ms timeout=5ms
+versão       K       itens/s ocup. média  espera Put  timeouts  itens por consumidor
+canal        1          2981        1.00      1.34ms         0  [2022 2003 1988 1987]  produzidos=8000 consumidos=8000 OK
+semaforo     1          2905        0.99     1.376ms         0  [1974 2019 1975 2032]  produzidos=8000 consumidos=8000 OK
+canal       10          2779        9.99     1.435ms         0  [1997 1975 2046 1982]  produzidos=8000 consumidos=8000 OK
+semaforo    10          2859        9.98     1.395ms         0  [2002 2008 2013 1977]  produzidos=8000 consumidos=8000 OK
+canal      100          2837       99.46     1.374ms         0  [2013 1974 1999 2014]  produzidos=8000 consumidos=8000 OK
+semaforo   100          2830       99.36     1.381ms         0  [1984 2024 1983 2009]  produzidos=8000 consumidos=8000 OK

@@ -1,0 +1,46 @@
+﻿N=5 R=1000 pensar<2ms comer<2ms segurar=2ms
+
+=== estratégia: base ===
+  filósofo 4 esperou mais de 1s pelo garfo 0: DEADLOCK
+  filósofo 1 esperou mais de 1s pelo garfo 2: DEADLOCK
+  filósofo 0 esperou mais de 1s pelo garfo 1: DEADLOCK
+  filósofo 3 esperou mais de 1s pelo garfo 4: DEADLOCK
+  filósofo 2 esperou mais de 1s pelo garfo 3: DEADLOCK
+filósofo    refeições    espera média (ms)
+0                   0                 0.00
+1                   0                 0.00
+2                   0                 0.00
+3                   0                 0.00
+4                   0                 0.00
+total: 0 refeições em 1.005s | menos: 0, mais: 0
+RESULTADO: deadlock detectado (todos os filósofos ficaram bloqueados).
+
+=== estratégia: hierarquia ===
+filósofo    refeições    espera média (ms)
+0                 163                 4.67
+1                 207                 3.13
+2                 218                 2.76
+3                 248                 2.07
+4                 164                 4.69
+total: 1000 refeições em 1.257s | menos: 163, mais: 248
+RESULTADO: sem deadlock; todas as goroutines terminaram.
+
+=== estratégia: limite ===
+filósofo    refeições    espera média (ms)
+0                 199                 4.69
+1                 199                 4.61
+2                 201                 4.64
+3                 201                 4.58
+4                 200                 4.67
+total: 1000 refeições em 1.541s | menos: 199, mais: 201
+RESULTADO: sem deadlock; todas as goroutines terminaram.
+
+=== estratégia: garcom ===
+filósofo    refeições    espera média (ms)
+0                 198                 1.68
+1                 201                 1.70
+2                 200                 1.70
+3                 204                 1.66
+4                 197                 1.79
+total: 1000 refeições em 905ms | menos: 197, mais: 204
+RESULTADO: sem deadlock; todas as goroutines terminaram.
